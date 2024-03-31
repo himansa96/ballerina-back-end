@@ -15,14 +15,15 @@
 // under the License.
 
 
-import { getReadingListInstance } from "./instance";
+import { apiUrl } from "./constants";
+import { performRequestWithRetry } from "../retry";
 
-export async function deleteBooks(accessToken: string, id: string) {
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
+
+export async function deleteBooks(id: string) {
+ const options = {
+    method: 'DELETE',
   };
-  const response = await getReadingListInstance().delete(`/books?id=${id}`, {
-    headers: headers,
-  });
+
+  const response = await performRequestWithRetry(`${apiUrl}/books?id=${id}`, options);
   return response;
 }

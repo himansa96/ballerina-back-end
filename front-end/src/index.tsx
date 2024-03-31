@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
+import Cookies from 'js-cookie';
 import React, { useEffect, useState } from "react";
 import { Tab } from "@headlessui/react";
 import { getBooks } from "./api/books/get-books";
@@ -22,9 +22,9 @@ import { Book } from "./api/books/types/book";
 import groupBy from "lodash/groupBy";
 import AddItem from "./components/modal/fragments/add-item";
 import { deleteBooks } from "./api/books/delete-books";
-import { BasicUserInfo, useAuthContext } from "@asgardeo/auth-react";
 import { Dictionary } from "lodash";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { toast } from 'react-toastify';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -34,51 +34,50 @@ export default function App() {
   const [readList, setReadList] = useState<Dictionary<Book[]> | null>(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    signIn,
-    signOut,
-    getAccessToken,
-    isAuthenticated,
-    getBasicUserInfo,
-    state,
-  } = useAuthContext();
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
-  const [user, setUser] = useState<BasicUserInfo | null>(null);
-
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    async function signInCheck() {
-      setIsAuthLoading(true);
-      await sleep(2000);
-      const isSignedIn = await isAuthenticated();
-      setSignedIn(isSignedIn);
-      setIsAuthLoading(false);
-      return isSignedIn;
+    if (Cookies.get('userinfo')) {
+      // We are here after a login
+      const userInfoCookie = Cookies.get('userinfo')
+      sessionStorage.setItem("userInfo", userInfoCookie);
+      Cookies.remove('userinfo');
+      var userInfo = JSON.parse(atob(userInfoCookie));
+      setSignedIn(true);
+      setUser(userInfo);
+    } else if (sessionStorage.getItem("userInfo")) {
+      // We have already logged in
+      var userInfo = JSON.parse(atob(sessionStorage.getItem("userInfo")!));
+      setSignedIn(true);
+      setUser(userInfo);
+    } else {
+      console.log("User is not signed in");
     }
-    signInCheck().then((res) => {
-      if (res) {
-        getReadingList();
-        getUser();
-      } else {
-        console.log("User has not signed in");
-      }
-    });
+    setIsAuthLoading(false);
   }, []);
 
-  async function getUser() {
-    setIsLoading(true);
-    const userResponse = await getBasicUserInfo();
-    setUser(userResponse);
-    setIsLoading(false);
-  }
+  useEffect(() => {
+    // Handle errors from Managed Authentication
+    const errorCode = new URLSearchParams(window.location.search).get('code');
+    const errorMessage = new URLSearchParams(window.location.search).get('message');
+    if (errorCode) {
+      toast.error(<>
+        <p className="text-[16px] font-bold text-slate-800">Something went wrong !</p>
+        <p className="text-[13px] text-slate-400 mt-1">Error Code : {errorCode}<br />Error Description: {errorMessage}</p>
+      </>);    
+    }
+  }, []);
+
+  useEffect(() => {
+    getReadingList();
+  }, [signedIn]);
 
   async function getReadingList() {
     if (signedIn) {
       setIsLoading(true);
-      const accessToken = await getAccessToken();
-      getBooks(accessToken)
+      getBooks()
         .then((res) => {
           const grouped = groupBy(res.data, (item) => item.status);
           setReadList(grouped);
@@ -97,21 +96,10 @@ export default function App() {
   }, [isAddItemOpen]);
 
   const handleDelete = async (id: string) => {
-    const accessToken = await getAccessToken();
     setIsLoading(true);
-    await deleteBooks(accessToken, id);
+    await deleteBooks(id);
     getReadingList();
     setIsLoading(false);
-  };
-
-  const handleSignIn = async () => {
-    signIn()
-      .then(() => {
-        setSignedIn(true);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
   };
 
   if (isAuthLoading) {
@@ -122,7 +110,7 @@ export default function App() {
     return (
       <button
         className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
-        onClick={handleSignIn}
+        onClick={() => { window.location.href = "/auth/login" }}
       >
         Login
       </button>
@@ -136,7 +124,7 @@ export default function App() {
           <div className="flex justify-between items-center">
             {user && (
               <a href="#" className="font-bold text-xl text-[#36d1dc]">
-                {user?.orgName}
+                {user?.org_name}
               </a>
             )}
             <button
@@ -153,7 +141,10 @@ export default function App() {
           >
             <button
               className="float-right bg-[#5b86e5] p-2 rounded-md text-sm my-3 font-medium text-white"
-              onClick={() => signOut()}
+              onClick={() => {
+                sessionStorage.removeItem("userInfo");
+                window.location.href = `/auth/logout?session_hint=${Cookies.get('session_hint')}`;
+              }}
             >
               Logout
             </button>
@@ -208,11 +199,11 @@ export default function App() {
                       className={
                         isLoading
                           ? classNames(
-                              "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 animate-pulse"
-                            )
+                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 animate-pulse"
+                          )
                           : classNames(
-                              "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
-                            )
+                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
+                          )
                       }
                     >
                       <ul>

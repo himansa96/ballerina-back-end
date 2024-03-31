@@ -14,8 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import axios from "axios";
 
-export const getReadingListInstance = () => {
-  return axios.create({ baseURL: window.config.choreoApiUrl });
-};
+declare global {
+  interface Window {
+    configs: {
+      apiUrl: string;
+    };
+  }
+}
+
+export const apiUrl = window?.configs?.apiUrl ? window.configs.apiUrl : "/";

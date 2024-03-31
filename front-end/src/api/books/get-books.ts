@@ -16,15 +16,15 @@
 
 
 import { AxiosResponse } from "axios";
-import { getReadingListInstance } from "./instance";
+import { apiUrl } from "./constants";
 import { Book } from "./types/book";
+import { performRequestWithRetry } from "../retry";
 
-export async function getBooks(accessToken: string) {
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
+export async function getBooks() {
+ const options = {
+    method: 'GET',
   };
-  const response = await getReadingListInstance().get("/books", {
-    headers: headers,
-  });
+
+  const response = await performRequestWithRetry(`${apiUrl}/books`, options);
   return response as AxiosResponse<Book[]>;
 }
