@@ -1,34 +1,28 @@
 import ballerina/http;
-import ballerinax/trigger.github;
 import ballerina/io;
+import ballerina/os;
+import ballerinax/trigger.github;
 
 configurable github:ListenerConfig config = ?;
 
 listener http:Listener httpListener = new (8090);
 listener github:Listener webhookListener = new (config, httpListener);
-
-service github:IssuesService on webhookListener {
-
-    remote function onOpened(github:IssuesEvent payload) returns error? {
-        io:println("Received");
-    }
-    remote function onClosed(github:IssuesEvent payload) returns error? {
-        //Not Implemented
-    }
-    remote function onReopened(github:IssuesEvent payload) returns error? {
-        //Not Implemented
-    }
-    remote function onAssigned(github:IssuesEvent payload) returns error? {
-        //Not Implemented
-    }
-    remote function onUnassigned(github:IssuesEvent payload) returns error? {
-        //Not Implemented
-    }
-    remote function onLabeled(github:IssuesEvent payload) returns error? {
-        //Not Implemented
-    }
-    remote function onUnlabeled(github:IssuesEvent payload) returns error? {
-        //Not Implemented
+service github:PushService on webhookListener {
+    remote function onPush(github:PushEvent payload) returns error? {
+        io:println("HAHA");
+        string serviceUrl = os:getEnv("SERVICE_URL");
+        string consumerKey = os:getEnv("CONSUMER_KEY");
+        string consumerSecret = os:getEnv("CONSUMER_SECRET");
+        string tokenUrl = os:getEnv("TOKEN_URL");
+        http:Client httpEp = check new (url = serviceUrl, config = {
+            auth: {
+                tokenUrl: tokenUrl,
+                clientId: consumerKey,
+                clientSecret: consumerSecret
+            }
+        });
+        http:Response|http:ClientError res = httpEp->get("/greeting");
+        io:println(res);
     }
 }
 
