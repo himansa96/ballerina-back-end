@@ -1,12 +1,9 @@
 import ballerina/grpc;
 
-listener grpc:Listener grpcListener = new (9090);
+listener grpc:Listener ep = new (9090);
 
-configurable string ENDPOINT = ?;
-
-@grpc:Descriptor {value: ENDPOINT}
-service "Greeter" on grpcListener {
-
+@grpc:Descriptor {value: SERVICE_DESC}
+service "Greeter" on ep {
     remote function sayHello(HelloRequest value) returns HelloReply|error {
         return {message: "Hello " + value.name};
     }
