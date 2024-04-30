@@ -12,4 +12,4 @@ endpoints:
   type: GRPC
   # +optional Network level visibility of this endpoint. Defaults to Project
   # Accepted values: Project|Organization|Public.
-  networkVisibility: Organization
+  networkVisibility: Public
