@@ -22,7 +22,11 @@ service github:PushService on webhookListener {
             }
         });
         http:Response|http:ClientError res = httpEp->get("/greeting");
-        io:println(res);
+        if res is http:Response {
+            io:println(res.getJsonPayload());
+        } else {
+            io:println(res.cause());
+        }
     }
 }
 
