@@ -1,6 +1,6 @@
 import ballerina/http;
 import ballerinax/trigger.github;
-import ballerina/grpc;
+import ballerina/io;
 
 configurable github:ListenerConfig config = ?;
 
@@ -10,7 +10,7 @@ listener github:Listener webhookListener = new (config, httpListener);
 service github:IssuesService on webhookListener {
 
     remote function onOpened(github:IssuesEvent payload) returns error? {
-        grpc:Client grpcEp = check new (url = "");
+        io:println("Received");
     }
     remote function onClosed(github:IssuesEvent payload) returns error? {
         //Not Implemented
