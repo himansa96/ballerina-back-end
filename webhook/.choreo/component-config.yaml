@@ -3,8 +3,8 @@ kind: ComponentConfig
 spec:
   outbound:
     serviceReferences:
-    - name: choreo:///teslachallenge/backend/umprpe/803f0/v1/ORGANIZATION
-      connectionConfig: 01ef0712-fd2a-17a8-b2b0-13a77ea6b1fb
+    - name: choreo:///hima/services/llvqwv/803f0/v1/ORGANIZATION
+      connectionConfig: 01ef072d-c877-1ec8-86b0-52cc3093b68c
       env:
       - from: ServiceURL
         to: SERVICE_URL
