@@ -1,11 +1,10 @@
-import ballerina/http;
-import ballerina/io;
+import ballerina/grpc;
 
-service / on new http:Listener(9090) {
+listener grpc:Listener ep = new (9090);
 
-    // This function responds with `string` value `Hello, World!` to HTTP GET requests.
-    resource function get greeting() returns string {
-        io:println("SEWEE");
-        return "Hello, World!";
+@grpc:Descriptor {value: SERVICE_DESC}
+service "Greeter" on ep {
+    remote function sayHello(HelloRequest value) returns HelloReply|error {
+        return {message: "Hello " + value.name};
     }
 }
