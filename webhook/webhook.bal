@@ -9,7 +9,7 @@ listener http:Listener httpListener = new (8090);
 listener github:Listener webhookListener = new (config, httpListener);
 service github:PushService on webhookListener {
     remote function onPush(github:PushEvent payload) returns error? {
-        io:println("HAHA");
+        io:println("Event Received");
         string serviceUrl = os:getEnv("SERVICE_URL");
         string consumerKey = os:getEnv("CONSUMER_KEY");
         string consumerSecret = os:getEnv("CONSUMER_SECRET");
@@ -21,7 +21,11 @@ service github:PushService on webhookListener {
                 clientSecret: consumerSecret
             }
         });
-        http:Response|http:ClientError res = httpEp->get("/greeting");
+        http:Response|http:ClientError res = httpEp->/events.post({
+            repository: payload.repository.full_name,
+            pusher: payload.pusher.name,
+            after: payload.after
+        });
         if res is http:Response {
             io:println(res.getJsonPayload());
         } else {
